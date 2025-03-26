@@ -26,8 +26,6 @@ async def fetch_history(item):
         "Accept-Encoding": "br",  # Adding Brotli compression support
     }
 
-    print(f"Authorization header: {authHeaderString}")
-    
     params = {
         "market_hash_name": item,
         "currency": "USD"
@@ -43,26 +41,33 @@ async def fetch_history(item):
             response_data = await response.json()
             return response_data
 
-def cache_item():
+def cache_item(item, data):
     # Cache the item
-    read_cache()
+    cache = read_cache()
     cache[item] = data
-    # TODO: Save the cache to a file
+    save_cache(cache)
 
 def read_cache():
-    # Read the cache file if it exists
     if os.path.exists(CACHE_PATH):
-       with open(CACHE_PATH, 'r') as f:
-           return json.load(f)
+        if os.stat(CACHE_PATH).st_size == 0:  # Check if file is empty
+            return {}  # Return an empty dictionary instead of trying to load it
+        with open(CACHE_PATH, 'r') as file:
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:  # Handle corrupted or invalid JSON
+                return {}  
+    return {}
 
-def save_cache():
+def save_cache(cache):
     # Save the current state of the cache
-    pass
+    with open(CACHE_PATH, 'w') as f:
+        json.dump(cache, f)
 
 
 def main():
-    item = "AK-47 | Redline (Field-Tested)"
+    item = "AK-47 | Redline (Well-Worn)"
     history = asyncio.run(fetch_history(item))
+    cache_item(item, history)
     # read_cache()
     print(history) 
     
