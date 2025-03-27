@@ -1,15 +1,22 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-// const CACHE_PATH = path.join(__dirname, "Cache", "item_cache.json");
+// Define __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const CACHE_PATH = path.join(__dirname, "Cache", "item_cache.json");
 
 // Cache the item
 export function cacheItem(item, data) {
+    console.log(`Caching item: ${item}`);
     const cache = readCache();
-    cache[item] = {
-        data,
-        datetimeCached: Date.now()
-    }
+    // cache[item] = {
+    //     data,
+    //     datetimeCached: Date.now()
+    // }
+    cache[item] = data; // Store the data directly without timestamp
     saveCache(cache);
 }
 
@@ -30,24 +37,24 @@ export function readCache() {
     return {};
 }
 
-// export function readCacheItem(item) {
-//     const cache = readCache();
-//     const entry = cache[item];
+export function readCacheItem(item) {
+    const cache = readCache();
+    const entry = cache[item];
 
-//     if (!entry) {
-//         throw new Error(`Cache entry for ${item} not found. Method: readCacheItem.`);
-//     }
+    // if (!entry) {
+    //     throw new Error(`Cache entry for ${item} not found. Method: readCacheItem.`);
+    // }
 
-//     const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-//     const isExpired = Date.now() - entry.timestamp > oneWeekInMs;
+    // const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    // const isExpired = Date.now() - entry.timestamp > oneWeekInMs;
 
-//     if (isExpired) {
-//         console.log(`Cache entry for ${item} is expired.`);
-//         return false; // Treat as not cached if expired
-//     }
+    // if (isExpired) {
+    //     console.log(`Cache entry for ${item} is expired.`);
+    //     return false; // Treat as not cached if expired
+    // }
 
-//     return entry.data; // Return the cached data if not expired
-// }
+    return entry; // Return the cached data if not expired
+}
 
 // export function replaceInvalidCacheEntry(item, data) {
 //     const cache = readCache();
@@ -68,5 +75,5 @@ function saveCache(cache) {
 // Check if the item is in the cache
 export function isCached(item) {
     const cache = readCache();
-    return cache.hasOwnProperty(item);
+    return cache[item] !== undefined;
 }

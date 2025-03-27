@@ -1,9 +1,27 @@
-import { calculateProfit } from "./Scripts/helpers/pricing.js";
+import { calcProfit } from "./Scripts/helpers/pricing.js";
 import { fetchHistory } from "./Scripts/helpers/skinportHistory.js";
-import { cacheItem, replaceInvalidCacheEntry, isCached, readCacheItem } from "./Scripts/helpers/caching.js";
+import { cacheItem, readCacheItem } from "./Scripts/helpers/caching.js";
+import { isCached } from "./Scripts/helpers/caching.js";
 import { io } from "socket.io-client";
 import parser from 'socket.io-msgpack-parser';
 
+//console.log(readCacheItem('★ Huntsman Knife | Autotronic (Minimal Wear)')[0].last_7_days)
+
+function shouldIgnoreFamily(family) { // This isnt working
+  const ignoredFamilies = ['Fade', 'Case Hardened', 'Doppler', 'Gamma Doppler', 'Emerald', 'Sapphire', 'Ruby', 'Black Pearl'];
+  return ignoredFamilies.some(ignored => family.includes(ignored));
+}
+
+// Helper function to get or fetch item history
+async function getOrFetchHistory(marketHashName) {
+  if (isCached(marketHashName)) {
+      return readCacheItem(marketHashName);
+  }
+
+  const data = await fetchHistory(marketHashName);
+  cacheItem(marketHashName, data);
+  return data;
+}
 
 const socket = io('wss://skinport.com', {
   transports: ['websocket'],
@@ -16,66 +34,106 @@ socket.on('saleFeed', async (result) => {
   for (var i = 0; i < result.sales.length; i++) {
     if (result.sales[i].saleStatus == 'sold') {
       index = i;
+      // console.log(result.sales[i]);
       break;
     }
   }
 
-  if (result.eventType == 'listed') {
-    console.log(result.sales[index]);
+  if (result.sales[index].saleStatus != 'sold' && result.sales[index].category == 'Knife' || shouldIgnoreFamily(result.sales[index].marketHashName)) { // If new and knife
+
+    console.log("Item Found!: ", result.sales[index].marketHashName, " Sale Price: ", result.sales[index].salePrice/100, " Family: ", result.sales[index].family, " Category: ", result.sales[index].category, " URL: ", result.sales[index].url);
+    // Check if the item is already in the cache
+    if (!isCached(result.sales[index].marketHashName)) { // This works
+      // If the item is not in the cache, fetch the history from the API
+      // console.log("before fetch history")
+      const data = await fetchHistory(result.sales[index].marketHashName);
+      cacheItem(result.sales[index].marketHashName, data);
+      
+      // After its cached, check if the profit is met
+      if (calcProfit(result.sales[index].salePrice/100, data[0].last_7_days.median, 0.12)) {
+        // If the profit is met, do something
+        console.log('Profit met! Item URL is: ', result.sales[index].url);
+      }
+    } else {
+      // If the item is in the cache, read the history from the cache
+      const history = readCacheItem(result.sales[index].marketHashName);
+      // console.log("History:", history);
+
+      if (history) {
+        if (calcProfit(result.sales[index].salePrice/100, history[0].last_7_days.median, 0.12)) {
+          // If the profit is met, do something
+          console.log('Profit met! Item URL is: ', result.sales[index].url);
+        } 
+      } else {
+        // History is invalidated, fetch it again
+        console.log("Invalid cache entry.");
+        // const data = await fetchHistory(result.sales[index].marketHashName);
+        // replaceInvalidCacheEntry(result.sales[index].marketHashName, data);
+      }
+    }
   }
-
-```
-  STOPPING POINT NOTES
-  1. Check if the item is being listed, and it is a knife.
-  2. Check if the item is a fade or case hardened, if so ignore.
-  3. Check to see if the item history is in the cache, if not fetch it and add it.
-  4. Store the history of the item to use for future calculations.
-  5. Check if desired profit margin can be met. Data is in cents so divide by 100 to get dollars.
-```
-
-  // NEED TO IMPLEMENT CACHE INVALIDATION
-  // 1. Add date timestamp to cache when storing, check if it is older than 7 days.
-  // add to the existing object when retrieving cache.
-  // 2. If the cache is older than 7 days, fetch the history again and replace the cache entry.
-
-  // Filter for new listed knives.
-  // if (result.data.eventType === 'listed' && result.data.category === 'Knife') { // If new and knife
-  //   console.log(result.data);
-
-  //   if (result.data.family.includes('Fade') || result.data.family.includes('Case Hardened')) { // If Fade or case hardened, ignore
-  //     return;
-  //   }
-  //   // Check if the item is already in the cache
-  //   if (!isCached(result.data.marketHashName)) {
-  //     // If the item is not in the cache, fetch the history from the API
-  //     fetchHistory(result.data.marketHashName).then((data) => {
-  //       cacheItem(result.data.marketHashName, data);
-  //     });
-  //   } else {
-  //     // If the item is in the cache, read the history from the cache
-  //     const history = readCacheItem(result.data.marketHashName);
-
-  //     if (history) {
-  //       if (calculateProfit(itemPrice, history.median7day, 0.2)) {
-  //         // If the profit is met, do something
-  //         console.log('Profit met! Item URL is: ', itemURL);
-  //       } else {
-  //         // If the profit is not met, do something
-  //         console.log('Profit not met! :(');
-  //       }
-  //     } else {
-  //       // History is invalidated, fetch it again
-  //       const data = await fetchHistory(result.data.marketHashName);
-  //       replaceInvalidCacheEntry(result.data.marketHashName, data);
-  //     }
-  //   }
-  // }
 });
+
+// Refactored code to use the new function
+// socket.on('saleFeed', async (result) => {
+//   const sale = result.sales.find(sale => sale.saleStatus !== 'sold' && sale.category === 'Knife');
+//   if (!sale || shouldIgnoreFamily(sale.family)) {
+//       return;
+//   }
+
+//   console.log("Item Found!: ", sale.marketHashName, " Sale Price: ", sale.salePrice / 100, " Family: ", sale.family, " Category: ", sale.category, " URL: ", sale.url);
+
+//   const history = await getOrFetchHistory(sale.marketHashName);
+
+//   if (history && calculateProfit(sale.salePrice / 100, history.last_7_days.median, 0.12)) {
+//       console.log('Profit met! Item URL is: ', sale.url);
+//   } else {
+//       console.log('Profit not met!');
+//   }
+// });
 
 // Join Sale Feed with paramters.
 socket.emit('saleFeedJoin', { currency: 'USD', locale: 'en', appid: 730 })
 
+
 /*
+  STOPPING POINT NOTES
+  1. Check if the item is being listed, and it is a knife. X
+  2. Check if the item is a fade or case hardened, if so ignore. X + doppler
+  3. Check to see if the item history is in the cache, if not fetch it and add it. X
+  4. Store the history of the item to use for future calculations. X
+  5. Check if desired profit margin can be met. Data is in cents so divide by 100 to get dollars. X
+
+  Day 2
+  1. Still need to implement the cache invalidation.
+  2. Need to create Jest tests
+  3. Need to do sale volume checking
+  4. Need to add a price limit and floor
+  5. Need to clean up the code, hard to read and can be optimized.
+  
+  const result = {
+  eventType: 'saleFeed', // Event type
+  sales: [
+    {
+      saleStatus: 'new', // Not 'sold', so it will pass the first condition
+      category: 'Knife', // Matches the 'Knife' category condition
+      family: 'Karambit', // Does not include 'Fade' or 'Case Hardened'
+      marketHashName: '★ Karambit | Tiger Tooth (Factory New)', // Used for cache and API calls
+      salePrice: 50000, // Sale price in cents
+      url: 'karambit-tiger-tooth-factory-new', // URL for the item
+    },
+    {
+      saleStatus: 'sold', // This item will be skipped
+      category: 'Pistol',
+      family: 'Glock-18',
+      marketHashName: 'StatTrak™ Glock-18 | Water Elemental (Field-Tested)',
+      salePrice: 2000,
+      url: 'glock-18-water-elemental-field-tested',
+    },
+  ],
+};
+
+
 eventType: 'sold',
   sales: [
     {

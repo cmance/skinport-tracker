@@ -25,11 +25,11 @@ export async function fetchHistory(item) {
 
     try {
         const response = await fetch(`${HISTORY_URL}?${params.toString()}`, { headers });
-        console.log(`Response status code: ${response.status}`);
+        // console.log(`Response status code: ${response.status}`);
 
         if (response.status === 429) {
-            console.log("Rate limited. Retrying after 5 seconds...");
-            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds
+            console.log("Rate limited. Retrying after 65 seconds...");
+            await new Promise(resolve => setTimeout(resolve, 65000)); // Wait for 5 seconds
             return fetchHistory(item); // Retry the request
         }
 
