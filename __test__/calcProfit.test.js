@@ -1,4 +1,5 @@
 // import { calcProfit } from "../Scripts/helpers/pricing";
+calcProfit = require("../Scripts/helpers/pricing").calcProfit;
 
 test("calcProfit should return true for profitable items", () => {
   const itemPrice = 100;

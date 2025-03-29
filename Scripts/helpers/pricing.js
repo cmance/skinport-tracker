@@ -7,24 +7,34 @@
  * @returns {boolean} - True if the item is profitable, False otherwise
  */
 export function calcProfit(itemPrice, medianPrice, desiredPercentProfit = 0.1) {
-    if (medianPrice === null || medianPrice === undefined) {
-        console.log("Median price is null. Cannot calculate profit.");
+    if (medianPrice === null || medianPrice === undefined || itemPrice >= medianPrice) {
+        console.log("Invalid median price or item price is greater than median price. Item Price: ", itemPrice, " Median Price: ", medianPrice);
         return false;
     }
 
-    // Calculate the revenue after the 12% selling fee
-    const revenueAfterFee = medianPrice * 0.88;
+    const saleAfterFee = medianPrice * 0.88
+    const actualProfit = saleAfterFee - itemPrice
+    const actualProfitMargin = actualProfit / itemPrice
+    const maxBuyPrice = saleAfterFee * (1 - desiredPercentProfit)
+    
+    console.log(`Item Price: $${itemPrice}, Median Price: $${medianPrice}, Sale After Fee: $${saleAfterFee}, Actual Profit: ${round(actualProfit, 2)}, Actual Profit Margin: ${round(actualProfitMargin*100, 2)}%, Max Buy Price: $${round(maxBuyPrice, 2)}`);
 
-    // Calculate the maximum item price to achieve the desired profit margin
-    const maxItemPrice = revenueAfterFee / (1 + desiredPercentProfit);
-
-    console.log(`Item Price: ${itemPrice}, Median Price: ${medianPrice}, Revenue After Fee: ${revenueAfterFee}, Max Item Price: ${maxItemPrice}`);
-
-    // Check if the item price is less than or equal to the maximum item price
-    return itemPrice <= maxItemPrice;
+    if (actualProfitMargin >= desiredPercentProfit) {
+        console.log("\x1b[32mProfit met!\x1b[0m");
+        return true;
+    } else {
+        console.log("\x1b[31mProfit not met.\x1b[0m");
+        return false;
+    }
 }
 
-// itemPrice 100, medianPrice 150, desiredPercentProfit 0.1
-// revenueAfterFee = 150 * 0.88 = 132
-// maxItemPrice = 132 / (1 + 0.1) = 120
-// itemPrice 100 <= maxItemPrice 120 => true
+/**
+ * Rounds a number to the specified number of decimal places.
+ * 
+ * @param {number} value - The number to round
+ * @param {number} decimals - The number of decimal places
+ * @returns {number} - The rounded number
+ */
+function round(value, decimals) {
+    return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+}

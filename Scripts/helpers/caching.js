@@ -38,6 +38,7 @@ export function readCache() {
 }
 
 export function readCacheItem(item) {
+    console.log(`Reading cache item: ${item}`);
     const cache = readCache();
     const entry = cache[item];
 

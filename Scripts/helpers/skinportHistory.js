@@ -25,7 +25,6 @@ export async function fetchHistory(item) {
 
     try {
         const response = await fetch(`${HISTORY_URL}?${params.toString()}`, { headers });
-        // console.log(`Response status code: ${response.status}`);
 
         if (response.status === 429) {
             console.log("Rate limited. Retrying after 65 seconds...");
