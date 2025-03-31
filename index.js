@@ -133,6 +133,11 @@ socket.emit('saleFeedJoin', { currency: 'USD', locale: 'en', appid: 730 })
   3. Link the EC2 instance to a Discord bot to send messages when a profitable item is found.
   4. Add a clean up cache method to remove old cache entries.
 
+  Day 4
+  1. Cache invalidation
+  2. EC2 instance setup
+  3. Jest testing
+
   LONG TERM
   1. Create a way to automate the buying of the item when confidence is build with the app.
 */
