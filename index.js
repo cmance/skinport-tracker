@@ -1,6 +1,7 @@
 import { calcProfit } from "./Scripts/helpers/pricing.js";
 import { fetchHistory } from "./Scripts/helpers/skinportHistory.js";
 import { cacheItem, readCacheItem } from "./Scripts/helpers/caching.js";
+import { sendDiscordNotification } from "./Scripts/helpers/webhook.js";
 import { isCached } from "./Scripts/helpers/caching.js";
 import { io } from "socket.io-client";
 import parser from 'socket.io-msgpack-parser';
@@ -94,13 +95,16 @@ socket.on('saleFeed', async (result) => {
   const historyArray = await getOrFetchHistory(currentItem.marketHashName);
   const history = historyArray[0];
 
-  if (history.last_7_days.volume <= 3) {
+  if (history.last_7_days.volume <= 1) {
     console.log("Volume is too low: ", history.last_7_days.volume);
     return;
   }
 
-  if (history && calcProfit(currentItem.salePrice / 100, history.last_7_days.median, 0.12)) {
+  if (history && calcProfit(currentItem.salePrice / 100, history.last_7_days.median, 0.08)) {
     console.log(`${history.item_page}/${currentItem.saleId}`);
+    const url = `${history.item_page}/${currentItem.saleId}`;
+    currentItem.url = url; // Add the URL to the current item
+    sendDiscordNotification(currentItem);
   }
 });
 

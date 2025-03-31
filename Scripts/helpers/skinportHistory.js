@@ -9,7 +9,7 @@ const API_KEY = process.env.CLIENT_SECRET
 const HISTORY_URL = "https://api.skinport.com/v1/sales/history"
 
 export async function fetchHistory(item) {
-    console.log('Fetching history for:', item);
+    // console.log('Fetching history for:', item);
 
     // Encode API key and client ID
     const encodedData = Buffer.from(`${CLIENT_ID}:${API_KEY}`).toString('base64');
