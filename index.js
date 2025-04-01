@@ -6,16 +6,15 @@ import { isCached } from "./Scripts/helpers/caching.js";
 import { io } from "socket.io-client";
 import parser from 'socket.io-msgpack-parser';
 
+
 function shouldIgnoreFamily(family) {
   const ignoredFamilies = ['Fade', 'Case Hardened', 'Doppler', 'Gamma Doppler', 'Emerald', 'Sapphire', 'Ruby', 'Black Pearl'];
 
-  // Ensure `family` is a string
   if (typeof family !== 'string') {
     console.log("Invalid family value:", family);
     return false;
   }
 
-  // Check if the family matches any ignored families
   const isIgnored = ignoredFamilies.some(ignored => family.toLowerCase().includes(ignored.toLowerCase()));
 
   if (isIgnored) {
@@ -25,7 +24,6 @@ function shouldIgnoreFamily(family) {
   return isIgnored;
 }
 
-// Helper function to get or fetch item history
 async function getOrFetchHistory(marketHashName) {
   if (isCached(marketHashName)) {
     return readCacheItem(marketHashName);
@@ -42,16 +40,16 @@ const socket = io('wss://skinport.com', {
 });
 
 const testData = {
-  eventType: 'saleFeed', // Event type
+  eventType: 'saleFeed',
   sales: [
     {
       saleId: 59314859,
-      saleStatus: 'listed', // Not 'sold', so it will pass the first condition
-      category: 'Knife', // Matches the 'Knife' category condition
-      family: 'Karambit', // Does not include 'Fade' or 'Case Hardened'
-      marketHashName: '★ Karambit | Tiger Tooth (Factory New)', // Used for cache and API calls
-      salePrice: 50000, // Sale price in cents
-      url: 'karambit-tiger-tooth-factory-new' // URL for the item
+      saleStatus: 'listed',
+      category: 'Knife',
+      family: 'Karambit',
+      marketHashName: '★ Karambit | Tiger Tooth (Factory New)',
+      salePrice: 50000,
+      url: 'karambit-tiger-tooth-factory-new'
     },
     {
       saleStatus: 'listed', // This item will be skipped
@@ -65,7 +63,6 @@ const testData = {
 }
 
 
-// Listen to the Sale Feed
 socket.on('saleFeed', async (result) => {
   //result = testData; // For testing purposes, replace with actual data
 
@@ -74,7 +71,6 @@ socket.on('saleFeed', async (result) => {
     return;
   }
 
-  // Find the first valid sale
   const currentItem = result.sales.find((sale) => {
     if (!sale) return false; // Ignore null or undefined sales
     if (sale.saleStatus !== 'listed') return false; // Ignore sold items
@@ -84,9 +80,7 @@ socket.on('saleFeed', async (result) => {
     return true; // This sale is valid
   });
 
-  // Validate currentItem before accessing its properties
   if (!currentItem) {
-    // console.log("No valid items found.");
     return;
   }
 
@@ -101,8 +95,8 @@ socket.on('saleFeed', async (result) => {
   }
 
   if (history && calcProfit(currentItem.salePrice / 100, history.last_7_days.median, 0.08)) {
-    console.log(`${history.item_page}/${currentItem.saleId}`);
     const url = `${history.item_page}/${currentItem.saleId}`;
+    console.log(url);
     currentItem.url = url; // Add the URL to the current item
     sendDiscordNotification(currentItem);
   }
