@@ -67,7 +67,7 @@ const testData = {
 
 // Listen to the Sale Feed
 socket.on('saleFeed', async (result) => {
-  // result = testData; // For testing purposes, replace with actual data
+  //result = testData; // For testing purposes, replace with actual data
 
   if (!result.sales) {
     console.log("Invalid sales data:", result);
@@ -134,7 +134,7 @@ socket.emit('saleFeedJoin', { currency: 'USD', locale: 'en', appid: 730 })
   4. Add a clean up cache method to remove old cache entries.
 
   Day 4
-  1. Cache invalidation
+  1. Cache invalidation X
   2. EC2 instance setup
   3. Jest testing
 

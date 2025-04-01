@@ -12,11 +12,11 @@ const CACHE_PATH = path.join(__dirname, "Cache", "item_cache.json");
 export function cacheItem(item, data) {
     console.log(`Caching item: ${item}`);
     const cache = readCache();
-    // cache[item] = {
-    //     data,
-    //     datetimeCached: Date.now()
-    // }
-    cache[item] = data; // Store the data directly without timestamp
+    cache[item] = {
+        data,
+        datetimeCached: Date.now()
+    }
+    // cache[item] = data; // Store the data directly without timestamp
     saveCache(cache);
 }
 
@@ -40,29 +40,8 @@ export function readCache() {
 export function readCacheItem(item) {
     console.log(`Reading cache item: ${item}`);
     const cache = readCache();
-    const entry = cache[item];
-
-    // if (!entry) {
-    //     throw new Error(`Cache entry for ${item} not found. Method: readCacheItem.`);
-    // }
-
-    // const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-    // const isExpired = Date.now() - entry.timestamp > oneWeekInMs;
-
-    // if (isExpired) {
-    //     console.log(`Cache entry for ${item} is expired.`);
-    //     return false; // Treat as not cached if expired
-    // }
-
-    return entry; // Return the cached data if not expired
+    return cache[item]; // Return the cached data if not expired
 }
-
-// export function replaceInvalidCacheEntry(item, data) {
-//     const cache = readCache();
-//     delete cache[item];
-//     cacheItem(item, data);
-//     saveCache(cache);
-// }
 
 // Save the cache
 function saveCache(cache) {
@@ -76,5 +55,22 @@ function saveCache(cache) {
 // Check if the item is in the cache
 export function isCached(item) {
     const cache = readCache();
-    return cache[item] !== undefined;
+
+    if (!cache[item]) {
+        console.log(`Cache miss for item: ${item}`);
+        return false; // Item is not cached
+    }
+
+    // Check if the cache entry is expired
+    const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    const isExpired = Date.now() - cache[item].datetimeCached > oneWeekInMs;
+
+    if (isExpired) {
+        console.log(`Cache expired for item: ${item}`);
+        delete cache[item]; // Remove expired cache entry
+        saveCache(cache); // Save the updated cache
+        return false; // Cache is expired
+    }
+
+    return true; // Item is cached and not expired
 }
