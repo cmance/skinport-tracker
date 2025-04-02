@@ -87,7 +87,14 @@ socket.on('saleFeed', async (result) => {
   console.log("Item Found!: ", currentItem.marketHashName, " Sale Price: ", currentItem.salePrice / 100, " Family: ", currentItem.family, " Category: ", currentItem.category, " URL: ", currentItem.url);
 
   const historyArray = await getOrFetchHistory(currentItem.marketHashName);
+  
+  if (!historyArray || historyArray.length === 0) {
+    console.log("No history found for item: ", currentItem.marketHashName);
+    return;
+  }
+
   const history = historyArray[0];
+
 
   if (history.last_7_days.volume <= 1) {
     console.log("Volume is too low: ", history.last_7_days.volume);
