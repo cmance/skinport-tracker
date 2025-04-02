@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import fetch from "node-fetch";
+import { readCacheItem, isCached, cacheItem } from './caching.js';
 
 dotenv.config();
 
@@ -8,7 +9,14 @@ const API_KEY = process.env.CLIENT_SECRET
 
 const HISTORY_URL = "https://api.skinport.com/v1/sales/history"
 
-export async function fetchHistory(item) {
+
+/**
+ * Fetches history data for a given item from the Skinport API.
+ * It retries the request if rate limited (HTTP 429).
+ * @param {String} item 
+ * @returns {Object|null} - The history data for the item
+ */
+async function fetchHistory(item) {
     // console.log('Fetching history for:', item);
 
     // Encode API key and client ID
@@ -39,3 +47,18 @@ export async function fetchHistory(item) {
         return null;
     }
 }
+
+/**
+ * Checks if the item is cached and not expired. Fetches from API if not cached or expired.
+ * @param {String} marketHashName (item)
+ * @returns {Object} 
+ */
+export async function getOrFetchHistory(marketHashName) {
+    if (isCached(marketHashName)) {
+      return readCacheItem(marketHashName);
+    }
+  
+    const data = await fetchHistory(marketHashName);
+    cacheItem(marketHashName, data);
+    return data;
+  }

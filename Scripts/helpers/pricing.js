@@ -1,6 +1,5 @@
 /**
  * Determines if buying an item at the given price is profitable.
- * 
  * @param {number} itemPrice - The price you are paying for the item
  * @param {number} medianPrice - The median price of the item
  * @param {number} desiredPercentProfit - The desired profit margin (e.g., 0.1 for 10%)
@@ -30,7 +29,6 @@ export function calcProfit(itemPrice, medianPrice, desiredPercentProfit = 0.1) {
 
 /**
  * Rounds a number to the specified number of decimal places.
- * 
  * @param {number} value - The number to round
  * @param {number} decimals - The number of decimal places
  * @returns {number} - The rounded number

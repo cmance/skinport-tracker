@@ -1,38 +1,9 @@
 import { calcProfit } from "./Scripts/helpers/pricing.js";
-import { fetchHistory } from "./Scripts/helpers/skinportHistory.js";
-import { cacheItem, readCacheItem } from "./Scripts/helpers/caching.js";
+import { getOrFetchHistory } from "./Scripts/helpers/skinportHistory.js";
 import { sendDiscordNotification } from "./Scripts/helpers/webhook.js";
-import { isCached } from "./Scripts/helpers/caching.js";
+import { shouldIgnoreFamily } from "./Scripts/helpers/general.js";
 import { io } from "socket.io-client";
 import parser from 'socket.io-msgpack-parser';
-
-
-function shouldIgnoreFamily(family) {
-  const ignoredFamilies = ['Fade', 'Case Hardened', 'Doppler', 'Gamma Doppler', 'Emerald', 'Sapphire', 'Ruby', 'Black Pearl'];
-
-  if (typeof family !== 'string') {
-    console.log("Invalid family value:", family);
-    return false;
-  }
-
-  const isIgnored = ignoredFamilies.some(ignored => family.toLowerCase().includes(ignored.toLowerCase()));
-
-  if (isIgnored) {
-    console.log(`Ignoring family: ${family}`);
-  }
-
-  return isIgnored;
-}
-
-async function getOrFetchHistory(marketHashName) {
-  if (isCached(marketHashName)) {
-    return readCacheItem(marketHashName);
-  }
-
-  const data = await fetchHistory(marketHashName);
-  cacheItem(marketHashName, data);
-  return data;
-}
 
 const socket = io('wss://skinport.com', {
   transports: ['websocket'],
@@ -43,21 +14,12 @@ const testData = {
   eventType: 'saleFeed',
   sales: [
     {
-      saleId: 59314859,
       saleStatus: 'listed',
       category: 'Knife',
-      family: 'Karambit',
-      marketHashName: '★ Karambit | Tiger Tooth (Factory New)',
-      salePrice: 50000,
-      url: 'karambit-tiger-tooth-factory-new'
-    },
-    {
-      saleStatus: 'listed', // This item will be skipped
-      category: 'Pistol',
-      family: 'Glock-18',
-      marketHashName: 'StatTrak™ Glock-18 | Water Elemental (Field-Tested)',
-      salePrice: 2000,
-      url: 'glock-18-water-elemental-field-tested'
+      family: 'Bowie Knife',
+      marketHashName: '★ Bowie Knife | Bright Water (Factory New)',
+      salePrice: 100,
+      url: 'asd'
     }
   ]
 }
@@ -95,10 +57,9 @@ socket.on('saleFeed', async (result) => {
 
   const history = historyArray[0];
 
-
-  if (history.last_7_days.volume <= 1) {
-    console.log("Volume is too low: ", history.last_7_days.volume);
-    return;
+  if (!history || !history.last_7_days || history.last_7_days.volume <= 1) {
+    console.log("Invalid or insufficient history data for item: ", currentItem.marketHashName);
+    return; // Exit early if history is invalid or volume is too low
   }
 
   if (history && calcProfit(currentItem.salePrice / 100, history.last_7_days.median, 0.08)) {

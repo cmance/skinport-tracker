@@ -2,13 +2,17 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const CACHE_PATH = path.join(__dirname, "Cache", "item_cache.json");
 
-// Cache the item
+/**
+ * Caches an item with the key being the item name and the value being the data.
+ * The data is stored with a timestamp to check for expiration later.
+ * @param {String} item KEY
+ * @param {Object} data VALUE
+ */
 export function cacheItem(item, data) {
     console.log(`Caching item: ${item}`);
     const cache = readCache();
@@ -20,7 +24,10 @@ export function cacheItem(item, data) {
     saveCache(cache);
 }
 
-// Read the cache
+/**
+ * Reads the cache file and returns the cached data as an object.
+ * @returns {Object} - The cached data as an object.
+ */
 export function readCache() {
     if (fs.existsSync(CACHE_PATH)) {
         if (fs.statSync(CACHE_PATH).size === 0) {
@@ -37,28 +44,18 @@ export function readCache() {
     return {};
 }
 
+/**
+ * Reads a specific item from the cache and checks if it is expired.
+ * @param {String} item 
+ * @returns {Object}
+ */
 export function readCacheItem(item) {
     console.log(`Reading cache item: ${item}`);
-    const cache = readCache();
-    return cache[item]; // Return the cached data if not expired
-}
-
-// Save the cache
-function saveCache(cache) {
-    const dir = path.dirname(CACHE_PATH);
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2));
-}
-
-// Check if the item is in the cache
-export function isCached(item) {
     const cache = readCache();
 
     if (!cache[item]) {
         console.log(`Cache miss for item: ${item}`);
-        return false; // Item is not cached
+        return null; // Return null if the item is not cached
     }
 
     // Check if the cache entry is expired
@@ -69,8 +66,30 @@ export function isCached(item) {
         console.log(`Cache expired for item: ${item}`);
         delete cache[item]; // Remove expired cache entry
         saveCache(cache); // Save the updated cache
-        return false; // Cache is expired
+        return null; // Return null for expired items
     }
 
-    return true; // Item is cached and not expired
+    return cache[item].data; // Return the cached data if not expired
+}
+
+/**
+ * Saves the cache object to the cache file.
+ * @param {Object} cache 
+ */
+function saveCache(cache) {
+    const dir = path.dirname(CACHE_PATH);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2));
+}
+
+/**
+ * Checks if an item is cached and not expired.
+ * @param {String} item 
+ * @returns {Boolean}
+ */
+export function isCached(item) {
+    const cachedItem = readCacheItem(item);
+    return cachedItem !== null; // Return true if the item is valid and not expired
 }

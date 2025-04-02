@@ -1,5 +1,9 @@
 import fetch from 'node-fetch';
 
+/**
+ * Sends a notification to Discord using a webhook URL.
+ * @param {String} item 
+ */
 export async function sendDiscordNotification(item) {
   const webhookUrl = 'https://discord.com/api/webhooks/1355709529450348724/RKULzb2X7dQZiAN1sNPWuKH7RKrfnUqMe7UTRFmJwI0IVNeYXjZ640JJoRLf9J56xrh4'; // Replace with your webhook URL
 
