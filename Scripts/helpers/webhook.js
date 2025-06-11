@@ -5,7 +5,7 @@ import fetch from 'node-fetch';
  * @param {String} item 
  */
 export async function sendDiscordNotification(item) {
-  const webhookUrl = ''; // Replace with your discord webhook URL: Discord/Channel Info/Integrations/Create Webhook
+  const webhookUrl = process.env.DISCORD_WEBHOOK; // Replace with your discord webhook URL: Discord/Channel Info/Integrations/Create Webhook
 
   const payload = {
     content: `=======================================\n**Good Deal Found!**\n**Item:** ${item.marketHashName}\n**Price:** $${item.salePrice / 100}\n**URL:** ${item.url}\n=======================================`,

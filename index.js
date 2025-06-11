@@ -1,6 +1,6 @@
 import { calcProfit } from "./Scripts/helpers/pricing.js";
 import { getOrFetchHistory } from "./Scripts/helpers/skinportHistory.js";
-// import { sendDiscordNotification } from "./Scripts/helpers/webhook.js";
+import { sendDiscordNotification } from "./Scripts/helpers/webhook.js";
 import { shouldIgnoreFamily } from "./Scripts/helpers/general.js";
 import { io } from "socket.io-client";
 import parser from 'socket.io-msgpack-parser';
@@ -46,11 +46,13 @@ socket.on('saleFeed', async (result) => {
     return; // Exit early if history is invalid or volume is too low
   }
 
-  if (history && calcProfit(currentItem.salePrice / 100, history.last_7_days.median, 0.08)) {
+  if (history && calcProfit(currentItem.salePrice / 100, history.last_7_days.median, 0.08)) { // Change 0.08 to your desired profit margin
     const url = `${history.item_page}/${currentItem.saleId}`;
     console.log(url);
     currentItem.url = url;
-    // sendDiscordNotification(currentItem); IF YOU WANT DISCORD CHANNEL NOTIFICATIONS UNCOMMENT THIS AND SET IN WEBHOOK.JS
+    if (process.env.DISCORD_WEBHOOK) {
+      sendDiscordNotification(currentItem);
+    }
   }
 });
 

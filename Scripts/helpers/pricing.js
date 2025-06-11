@@ -5,7 +5,7 @@
  * @param {number} desiredPercentProfit - The desired profit margin (e.g., 0.1 for 10%)
  * @returns {boolean} - True if the item is profitable, False otherwise
  */
-export function calcProfit(itemPrice, medianPrice, desiredPercentProfit = 0.1) {
+export function calcProfit(itemPrice, medianPrice, desiredPercentProfit = 0.08) {
     if (medianPrice === null || medianPrice === undefined || itemPrice >= medianPrice) {
         console.log("Invalid median price or item price is greater than median price. Item Price: ", itemPrice, " Median Price: ", medianPrice);
         return false;
