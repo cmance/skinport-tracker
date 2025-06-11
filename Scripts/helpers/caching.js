@@ -20,7 +20,6 @@ export function cacheItem(item, data) {
         data,
         datetimeCached: Date.now()
     }
-    // cache[item] = data; // Store the data directly without timestamp
     saveCache(cache);
 }
 
@@ -31,14 +30,14 @@ export function cacheItem(item, data) {
 export function readCache() {
     if (fs.existsSync(CACHE_PATH)) {
         if (fs.statSync(CACHE_PATH).size === 0) {
-            return {}; // Return an empty object if the file is empty
+            return {}; // Return an empty object if the file is empty / init file
         }
         try {
             const fileData = fs.readFileSync(CACHE_PATH, 'utf-8');
             return JSON.parse(fileData);
         } catch (error) {
             console.error("Error reading cache:", error);
-            return {}; // Return an empty object if JSON is invalid
+            return {}; // Return an empty object if JSON is invalid / corrupt
         }
     }
     return {};
@@ -55,21 +54,21 @@ export function readCacheItem(item) {
 
     if (!cache[item]) {
         console.log(`Cache miss for item: ${item}`);
-        return null; // Return null if the item is not cached
+        return null;
     }
 
     // Check if the cache entry is expired
-    const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
     const isExpired = Date.now() - cache[item].datetimeCached > oneWeekInMs;
 
     if (isExpired) {
         console.log(`Cache expired for item: ${item}`);
-        delete cache[item]; // Remove expired cache entry
-        saveCache(cache); // Save the updated cache
-        return null; // Return null for expired items
+        delete cache[item];
+        saveCache(cache); 
+        return null;
     }
 
-    return cache[item].data; // Return the cached data if not expired
+    return cache[item].data;
 }
 
 /**
@@ -91,5 +90,5 @@ function saveCache(cache) {
  */
 export function isCached(item) {
     const cachedItem = readCacheItem(item);
-    return cachedItem !== null; // Return true if the item is valid and not expired
+    return cachedItem !== null;
 }

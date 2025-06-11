@@ -1,6 +1,6 @@
 import { calcProfit } from "./Scripts/helpers/pricing.js";
 import { getOrFetchHistory } from "./Scripts/helpers/skinportHistory.js";
-import { sendDiscordNotification } from "./Scripts/helpers/webhook.js";
+// import { sendDiscordNotification } from "./Scripts/helpers/webhook.js";
 import { shouldIgnoreFamily } from "./Scripts/helpers/general.js";
 import { io } from "socket.io-client";
 import parser from 'socket.io-msgpack-parser';
@@ -10,23 +10,7 @@ const socket = io('wss://skinport.com', {
   parser,
 });
 
-const testData = {
-  eventType: 'saleFeed',
-  sales: [
-    {
-      saleStatus: 'listed',
-      category: 'Knife',
-      family: 'Bowie Knife',
-      marketHashName: '★ Bowie Knife | Bright Water (Factory New)',
-      salePrice: 100,
-      url: 'asd'
-    }
-  ]
-}
-
-
 socket.on('saleFeed', async (result) => {
-  //result = testData; // For testing purposes, replace with actual data
 
   if (!result.sales) {
     console.log("Invalid sales data:", result);
@@ -65,41 +49,10 @@ socket.on('saleFeed', async (result) => {
   if (history && calcProfit(currentItem.salePrice / 100, history.last_7_days.median, 0.08)) {
     const url = `${history.item_page}/${currentItem.saleId}`;
     console.log(url);
-    currentItem.url = url; // Add the URL to the current item
-    sendDiscordNotification(currentItem);
+    currentItem.url = url;
+    // sendDiscordNotification(currentItem); IF YOU WANT DISCORD CHANNEL NOTIFICATIONS UNCOMMENT THIS AND SET IN WEBHOOK.JS
   }
 });
 
 // Join Sale Feed with paramters.
 socket.emit('saleFeedJoin', { currency: 'USD', locale: 'en', appid: 730 })
-
-
-/*
-  STOPPING POINT NOTES
-  1. Check if the item is being listed, and it is a knife. X
-  2. Check if the item is a family that is hard to find pricing data on (ex. Fade, Doppler), if so ignore. X
-  3. Check to see if the item history is in the cache, if not fetch it and add it. X
-  4. Store the history of the item to use for future calculations. X
-  5. Check if desired profit margin can be met. Data is in cents so divide by 100 to get dollars. X
-
-  Day 2
-  1. Still need to implement the cache invalidation.
-  2. Need to create Jest tests X
-  3. Need to do sale volume checking X
-  4. Need to add a price limit X
-  5. Need to clean up the code, hard to read and can be optimized. X
-
-  Day 3
-  1. Add extensive testing in Jest for each method and tests for index.js with test data
-  2. Add to EC2 and run 24/7
-  3. Link the EC2 instance to a Discord bot to send messages when a profitable item is found.
-  4. Add a clean up cache method to remove old cache entries.
-
-  Day 4
-  1. Cache invalidation X
-  2. EC2 instance setup
-  3. Jest testing
-
-  LONG TERM
-  1. Create a way to automate the buying of the item when confidence is build with the app.
-*/
